@@ -2,6 +2,7 @@ package com.example.weatherapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -39,6 +40,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var mProgressDialog: Dialog? = null
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -138,9 +140,14 @@ class MainActivity : AppCompatActivity() {
                 Constant.APP_ID
             )
 
+            showDialog()
+
             listCall.enqueue(object : Callback<WeatherResponse> {
-                override fun onResponse(call: Call<WeatherResponse>, response: Response<WeatherResponse>) {
-                    if(response.isSuccessful.not()) {
+                override fun onResponse(
+                    call: Call<WeatherResponse>,
+                    response: Response<WeatherResponse>
+                ) {
+                    if (response.isSuccessful.not()) {
                         when (val code = response.code()) {
                             400 -> Log.e("api", "400 Bad Connection")
                             404 -> Log.e("api", "404 Not Found")
@@ -150,9 +157,11 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     val weatherList = response.body()
+                    hideDialog()
                 }
 
                 override fun onFailure(call: Call<WeatherResponse>, exception: Throwable) {
+                    hideDialog()
                     Log.e("api", "${exception.message}")
                 }
 
@@ -172,6 +181,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showDialog() {
+        mProgressDialog = Dialog(this)
+        mProgressDialog?.run {
+            setContentView(binding.root)
+            show()
+        }
+    }
+
+    private fun hideDialog() {
+        mProgressDialog?.run {
+            dismiss()
+        }
+    }
 
     private fun isLocationEnabled(): Boolean {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
