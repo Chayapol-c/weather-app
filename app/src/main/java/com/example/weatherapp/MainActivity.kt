@@ -6,7 +6,7 @@ import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.icu.lang.UCharacter.GraphemeClusterBreak.L
+import android.content.SharedPreferences
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.weatherapp.Constant.WEATHER_RESPONSE_DATA
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.model.WeatherResponse
 import com.example.weatherapp.model.network.WeatherService
@@ -28,6 +29,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationRequest.Builder
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.gson.Gson
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -44,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var mProgressDialog: Dialog? = null
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
+    private lateinit var mSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        mSharedPreferences = getPreferences(MODE_PRIVATE)
 
         if (isLocationEnabled().not()) {
             Toast.makeText(this, "Your location provider is turned off", Toast.LENGTH_SHORT).show()
@@ -158,8 +162,14 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     }
-                    val weatherList = response.body()
                     hideDialog()
+                    response.body()?.let {
+                        val weatherResponseJsonString = Gson().toJson(it)
+                        val editor = mSharedPreferences.edit()
+                        editor.putString(WEATHER_RESPONSE_DATA, weatherResponseJsonString)
+                        editor.apply()
+                        setUpView()
+                    }
                 }
 
                 override fun onFailure(call: Call<WeatherResponse>, exception: Throwable) {
