@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -18,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.location.LocationManagerCompat.isLocationEnabled
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.weatherapp.model.WeatherResponse
+import com.example.weatherapp.model.network.WeatherService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -29,6 +32,11 @@ import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
 
@@ -115,10 +123,58 @@ class MainActivity : AppCompatActivity() {
 
     private val mLocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            val mLastLocation = locationResult.lastLocation
-            val latitude = mLastLocation?.latitude
-            val longitude = mLastLocation?.longitude
-            super.onLocationResult(locationResult)
+            locationResult.lastLocation?.let {
+                getLocationWeatherDetails(it.latitude, it.longitude)
+            }
+        }
+    }
+
+    private fun getLocationWeatherDetails(latitude: Double, longitude: Double) {
+        if (Constant.isNetworkAvailable(this)) {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(Constant.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val service = retrofit.create(WeatherService::class.java)
+            val listCall = service.getWeather(
+                lat = latitude,
+                lon = longitude,
+                Constant.METRIC_UNIT,
+                Constant.APP_ID
+            )
+
+            listCall.enqueue(object : Callback<WeatherResponse> {
+                override fun onResponse(call: Call<WeatherResponse>, response: Response<WeatherResponse>) {
+                    if(response.isSuccessful.not()) {
+                        when (val code = response.code()) {
+                            400 -> Log.e("api", "400 Bad Connection")
+                            404 -> Log.e("api", "404 Not Found")
+                            else -> {
+                                Log.e("api", "$code")
+                            }
+                        }
+                    }
+                    val weatherList = response.body()
+                }
+
+                override fun onFailure(call: Call<WeatherResponse>, exception: Throwable) {
+                    Log.e("api", "${exception.message}")
+                }
+
+            })
+
+            Toast.makeText(
+                this@MainActivity,
+                "No Internet connection available",
+                Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            Toast.makeText(
+                this@MainActivity,
+                "",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
