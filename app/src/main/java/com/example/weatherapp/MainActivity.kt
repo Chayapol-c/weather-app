@@ -38,6 +38,10 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class MainActivity : AppCompatActivity() {
 
@@ -85,6 +89,80 @@ class MainActivity : AppCompatActivity() {
 
             }).onSameThread().check()
 
+        }
+    }
+
+    private fun setUpView() {
+        val weatherList = mSharedPreferences.getString(WEATHER_RESPONSE_DATA, "")?.let {
+            Gson().fromJson(it, WeatherResponse::class.java)
+        }
+        if (weatherList == null) {
+            return
+        }
+        weatherList.weather.forEachIndexed { index, weather ->
+            with(binding) {
+                tvMain.text = weather.main
+                tvMainDescription.text = weather.description
+
+                when(weather.icon) {
+                    "01d" -> ivMain.setImageResource(R.drawable.sunny)
+                    "01n" -> ivMain.setImageResource(R.drawable.cloud) // clear sky
+
+                    "02d" -> ivMain.setImageResource(R.drawable.cloud)
+                    "02n" -> ivMain.setImageResource(R.drawable.cloud)
+
+                    "03d" -> ivMain.setImageResource(R.drawable.cloud) // scattered clouds
+                    "03n" -> ivMain.setImageResource(R.drawable.cloud)
+                    "04d" -> ivMain.setImageResource(R.drawable.cloud) // broken clouds
+                    "04n" -> ivMain.setImageResource(R.drawable.cloud)
+
+                    "09d" -> ivMain.setImageResource(R.drawable.rain) // shower rain
+                    "09n" -> ivMain.setImageResource(R.drawable.rain)
+
+                    "10d" -> ivMain.setImageResource(R.drawable.rain)
+                    "10n" -> ivMain.setImageResource(R.drawable.cloud)
+
+                    "11d" -> ivMain.setImageResource(R.drawable.storm)
+                    "11n" -> ivMain.setImageResource(R.drawable.rain)
+
+                    "13d" -> ivMain.setImageResource(R.drawable.snowflake)
+                    "13n" -> ivMain.setImageResource(R.drawable.snowflake)
+
+                    "50d" -> ivMain.setImageResource(R.drawable.rain) // mist
+                    "50n" -> ivMain.setImageResource(R.drawable.rain)
+                }
+            }
+        }
+        with(binding) {
+            tvTemp.text =
+                weatherList.main.temp.toString() + application.resources.configuration.locales.toString().getUnit()
+
+            tvHumidity.text = weatherList.main.humidity.toString() + "per cen"
+            tvMin.text = weatherList.main.tempMin.toString() + " min"
+            tvMax.text = weatherList.main.tempMax.toString() + " max"
+            tvSpeed.text = weatherList.wind.speed.toString()
+            tvName.text = weatherList.name
+            tvCountry.text = weatherList.sys.country
+
+            tvSunriseTime.text = weatherList.sys.sunrise.unixTime()
+            tvSunsetTime.text = weatherList.sys.sunset.unixTime()
+        }
+    }
+
+    fun Long.unixTime(): String {
+        return SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+            timeZone = TimeZone.getDefault()
+        }.let {
+            val date = Date(this * 1000L)
+            it.format(date)
+        }
+    }
+
+    fun String.getUnit(): String {
+        return if ("US" == this || "LR" == this || "MM" == this) {
+            "°F"
+        } else {
+            "°C"
         }
     }
 
