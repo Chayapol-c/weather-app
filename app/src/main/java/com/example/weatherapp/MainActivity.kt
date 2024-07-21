@@ -12,14 +12,13 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.example.weatherapp.Constant.WEATHER_RESPONSE_DATA
+import androidx.lifecycle.lifecycleScope
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.ui.AppStatus
 import com.example.weatherapp.ui.WeatherViewModel
@@ -28,22 +27,15 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.gson.Gson
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -83,28 +75,7 @@ class MainActivity : AppCompatActivity() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mSharedPreferences = getPreferences(MODE_PRIVATE)
 
-        if (isLocationEnabled().not()) {
-            Toast.makeText(this, "Your location provider is turned off", Toast.LENGTH_SHORT).show()
-
-            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            startActivity(intent)
-        } else {
-            Dexter.withContext(this).withPermissions(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ).withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                    if (report?.areAllPermissionsGranted() == true) {
-                        requestLocationData()
-                    }
-                    if (report?.isAnyPermissionPermanentlyDenied == true) {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "You have denied location permission",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
+        validatePermission()
 
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
@@ -171,40 +142,64 @@ class MainActivity : AppCompatActivity() {
                     }
                     AppStatus.Error -> {
 
-    fun Long.unixTime(): String {
-        return SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
-            timeZone = TimeZone.getDefault()
-        }.let {
-            val date = Date(this * 1000L)
-            it.format(date)
-        }
-    }
-
-    fun String.getUnit(): String {
-        return if ("US" == this || "LR" == this || "MM" == this) {
-            "°F"
-        } else {
-            "°C"
-        }
-    }
-
-    private fun showRationalDialogForPermission() {
-        AlertDialog.Builder(this)
-            .setMessage("It looks like you")
-            .setPositiveButton("GO TO SETTINGS") { _, _ ->
-                try {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    val uri = Uri.fromParts("package", packageName, null)
-                    intent.data = uri
-                    startActivity(intent)
-                } catch (e: ActivityNotFoundException) {
-                    e.printStackTrace()
+                    }
                 }
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        }
+    }
+
+    private fun validatePermission() {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        val isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
+            LocationManager.NETWORK_PROVIDER
+        )
+        if (isLocationEnabled.not()) {
+            Toast.makeText(this, "Your location provider is turned off", Toast.LENGTH_SHORT).show()
+
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivity(intent)
+        } else {
+            Dexter.withContext(this).withPermissions(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ).withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                    if (report?.areAllPermissionsGranted() == true) {
+                        requestLocationData()
+                    }
+                    if (report?.isAnyPermissionPermanentlyDenied == true) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "You have denied location permission",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                override fun onPermissionRationaleShouldBeShown(
+                    permisions: MutableList<PermissionRequest>?, token: PermissionToken?
+                ) {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setMessage("It looks like you")
+                        .setPositiveButton("GO TO SETTINGS") { _, _ ->
+                            try {
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri = Uri.fromParts("package", packageName, null)
+                                intent.data = uri
+                                startActivity(intent)
+                            } catch (e: ActivityNotFoundException) {
+                                e.printStackTrace()
+                            }
+                        }
+                        .setNegativeButton("Cancel") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .show()
+                }
+
+            }).onSameThread().check()
+        }
     }
 
     @SuppressLint("MissingPermission")
