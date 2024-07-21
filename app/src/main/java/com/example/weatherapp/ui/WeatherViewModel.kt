@@ -5,22 +5,21 @@ import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.Constant.APP_ID
 import com.example.weatherapp.Constant.METRIC_UNIT
 import com.example.weatherapp.data.model.WeatherRequest
+import com.example.weatherapp.domain.WeatherUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val repository: WeatherRepository
+    private val weatherUseCase: WeatherUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -47,27 +46,26 @@ class WeatherViewModel @Inject constructor(
             )
         }
 
-        flow {
-            val response = repository.getWeatherInfo(request)
-            emit(response)
-
-        }.onStart {
-            _uiState.update {
-                it.copy(status = AppStatus.Loading)
-            }
-        }.onCompletion {
-            _uiState.update {
-                it.copy(status = AppStatus.Idle)
-            }
-        }.catch {
-            _uiState.update {
-                it.copy(status = AppStatus.Error)
-            }
-        }.onEach { response ->
-            _uiState.update {
-                it.copy(status = AppStatus.Idle, weatherInfo = response)
-            }
-        }.launchIn(viewModelScope)
+        viewModelScope.launch {
+            weatherUseCase(request)
+                .onStart {
+                    _uiState.update {
+                        it.copy(status = AppStatus.Loading)
+                    }
+                }.onCompletion {
+                    _uiState.update {
+                        it.copy(status = AppStatus.Idle)
+                    }
+                }.catch {
+                    _uiState.update {
+                        it.copy(status = AppStatus.Error)
+                    }
+                }.collect { response ->
+                    _uiState.update {
+                        it.copy(status = AppStatus.Idle, weatherInfo = response)
+                    }
+                }
+        }
     }
 
     fun updateLatLon(latitude: Double, longitude: Double) {
