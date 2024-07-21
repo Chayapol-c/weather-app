@@ -1,6 +1,6 @@
 package com.example.weatherapp.ui
 
-import com.example.weatherapp.model.WeatherResponse
+import com.example.weatherapp.data.model.WeatherResponse
 
 data class WeatherUiState (
     val status: AppStatus,

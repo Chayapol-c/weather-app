@@ -1,9 +1,9 @@
-package com.example.weatherapp.model.repository
+package com.example.weatherapp.data.repository
 
 import android.util.Log
-import com.example.weatherapp.model.WeatherRequest
-import com.example.weatherapp.model.WeatherResponse
-import com.example.weatherapp.model.network.WeatherService
+import com.example.weatherapp.data.model.WeatherRequest
+import com.example.weatherapp.data.model.WeatherResponse
+import com.example.weatherapp.data.network.WeatherService
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.withContext
 import javax.inject.Inject

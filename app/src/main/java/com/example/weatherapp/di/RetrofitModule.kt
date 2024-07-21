@@ -1,8 +1,7 @@
 package com.example.weatherapp.di
 
 import com.example.weatherapp.Constant
-import com.example.weatherapp.model.network.WeatherService
-import dagger.Binds
+import com.example.weatherapp.data.network.WeatherService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,7 +28,7 @@ object RetrofitModule {
 
     @Provides
     @Singleton
-    fun provideWeatherService(retrofit: Retrofit): WeatherService{
+    fun provideWeatherService(retrofit: Retrofit): WeatherService {
         return retrofit.create(WeatherService::class.java)
     }
 }
