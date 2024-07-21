@@ -16,7 +16,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.weatherapp.Constant.WEATHER_RESPONSE_DATA
@@ -26,7 +25,6 @@ import com.example.weatherapp.model.network.WeatherService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationRequest.Builder
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
@@ -63,29 +61,29 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         } else {
             Dexter.withContext(this).withPermissions(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ).withListener(object : MultiplePermissionsListener {
-                    override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                        if (report?.areAllPermissionsGranted() == true) {
-                            requestLocationData()
-                        }
-                        if (report?.isAnyPermissionPermanentlyDenied == true) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "You have denied location permission",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ).withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                    if (report?.areAllPermissionsGranted() == true) {
+                        requestLocationData()
                     }
-
-                    override fun onPermissionRationaleShouldBeShown(
-                        permisions: MutableList<PermissionRequest>?, token: PermissionToken?
-                    ) {
-                        showRationalDialogForPermission()
+                    if (report?.isAnyPermissionPermanentlyDenied == true) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "You have denied location permission",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
+                }
 
-                }).onSameThread().check()
+                override fun onPermissionRationaleShouldBeShown(
+                    permisions: MutableList<PermissionRequest>?, token: PermissionToken?
+                ) {
+                    showRationalDialogForPermission()
+                }
+
+            }).onSameThread().check()
 
         }
     }
@@ -221,11 +219,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when(item.itemId) {
+        return when (item.itemId) {
             R.id.action_refresh -> {
                 requestLocationData()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
