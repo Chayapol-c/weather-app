@@ -21,11 +21,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.ui.AppStatus
+import com.example.weatherapp.ui.LocationViewModel
 import com.example.weatherapp.ui.WeatherViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
@@ -40,43 +38,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var mProgressDialog: Dialog? = null
-    private lateinit var mFusedLocationClient: FusedLocationProviderClient
-    private lateinit var mSharedPreferences: SharedPreferences
     private val viewModel: WeatherViewModel by viewModels()
-
-    private val mLocationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            locationResult.lastLocation?.let {
-                viewModel.updateLatLon(it.latitude, it.longitude)
-                if (Constant.isNetworkAvailable(this@MainActivity)) {
-                    viewModel.fetchWeatherData()
-
-                    Toast.makeText(
-                        this@MainActivity,
-                        "No Internet connection available",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
+    private val locationViewModel: LocationViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        mSharedPreferences = getPreferences(MODE_PRIVATE)
-
-        validatePermission()
-
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 when (state.status) {
@@ -84,12 +52,12 @@ class MainActivity : AppCompatActivity() {
                         mProgressDialog?.run {
                             dismiss()
                         }
-                        with (binding) {
+                        with(binding) {
                             state.weatherInfo?.let {
                                 it.weather.forEach { weather ->
                                     tvMain.text = weather.main
                                     tvMainDescription.text = weather.description
-                                    when(weather.icon) {
+                                    when (weather.icon) {
                                         "01d" -> ivMain.setImageResource(R.drawable.sunny)
                                         "01n" -> ivMain.setImageResource(R.drawable.cloud) // clear sky
 
@@ -119,7 +87,8 @@ class MainActivity : AppCompatActivity() {
                                 }
 
                                 tvTemp.text =
-                                    it.main.temp.toString() + application.resources.configuration.locales.toString().getUnit()
+                                    it.main.temp.toString() + application.resources.configuration.locales.toString()
+                                        .getUnit()
 
                                 tvHumidity.text = it.main.humidity.toString() + "per cen"
                                 tvMin.text = it.main.tempMin.toString() + " min"
@@ -133,6 +102,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     }
+
                     AppStatus.Loading -> {
                         mProgressDialog = Dialog(this@MainActivity)
                         mProgressDialog?.run {
@@ -140,6 +110,7 @@ class MainActivity : AppCompatActivity() {
                             show()
                         }
                     }
+
                     AppStatus.Error -> {
 
                     }
@@ -148,12 +119,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        validatePermission()
+    }
+
+    override fun onPause() {
+        locationViewModel.pauseUpdate()
+    }
+
     private fun validatePermission() {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        val isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
-            LocationManager.NETWORK_PROVIDER
-        )
+        val isLocationEnabled =
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
+                LocationManager.NETWORK_PROVIDER
+            )
         if (isLocationEnabled.not()) {
             Toast.makeText(this, "Your location provider is turned off", Toast.LENGTH_SHORT).show()
 
@@ -204,16 +185,25 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationData() {
-        val mLocationRequest = LocationRequest().apply {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationViewModel.updateLocation { locationResult ->
+            locationResult.lastLocation?.let {
+                viewModel.updateLatLon(it.latitude, it.longitude)
+                if (Constant.isNetworkAvailable(this)) {
+                    viewModel.fetchWeatherData()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "No Internet connection available",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
-
-        mFusedLocationClient.requestLocationUpdates(
-            mLocationRequest,
-            mLocationCallback,
-            Looper.myLooper()
-        )
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
