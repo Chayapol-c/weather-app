@@ -5,14 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.Constant.APP_ID
 import com.example.weatherapp.Constant.METRIC_UNIT
 import com.example.weatherapp.data.model.WeatherRequest
+import com.example.weatherapp.data.network.onError
+import com.example.weatherapp.data.network.onException
+import com.example.weatherapp.data.network.onSuccess
 import com.example.weatherapp.domain.WeatherUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,14 +22,7 @@ class WeatherViewModel @Inject constructor(
     private val weatherUseCase: WeatherUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        WeatherUiState(
-            status = AppStatus.Idle,
-            weatherInfo = null,
-            latitude = null,
-            longitude = null
-        )
-    )
+    private val _uiState = MutableStateFlow(WeatherUiState())
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
 
@@ -45,24 +38,30 @@ class WeatherViewModel @Inject constructor(
                 status = AppStatus.Loading
             )
         }
-
         viewModelScope.launch {
             weatherUseCase(request)
-                .onStart {
+                .onSuccess { newInfo ->
                     _uiState.update {
-                        it.copy(status = AppStatus.Loading)
+                        it.copy(
+                            status = AppStatus.Idle,
+                            weatherInfo = newInfo
+                        )
                     }
-                }.onCompletion {
+                }
+                .onError { code, message ->
                     _uiState.update {
-                        it.copy(status = AppStatus.Idle)
+                        it.copy(
+                            status = AppStatus.Error,
+                            errorMessage = "Error[$code]: $message"
+                        )
                     }
-                }.catch {
+                }
+                .onException { error ->
                     _uiState.update {
-                        it.copy(status = AppStatus.Error)
-                    }
-                }.collect { response ->
-                    _uiState.update {
-                        it.copy(status = AppStatus.Idle, weatherInfo = response)
+                        it.copy(
+                            status = AppStatus.Error,
+                            errorMessage = "Error: ${error.message}}"
+                        )
                     }
                 }
         }

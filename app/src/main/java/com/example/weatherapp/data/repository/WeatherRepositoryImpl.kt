@@ -1,35 +1,33 @@
 package com.example.weatherapp.data.repository
 
-import android.util.Log
 import com.example.weatherapp.data.model.WeatherRequest
 import com.example.weatherapp.data.model.WeatherResponse
+import com.example.weatherapp.data.network.NetworkResult
 import com.example.weatherapp.data.network.WeatherService
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import javax.inject.Inject
 
 class WeatherRepositoryImpl @Inject constructor(
-    private val service: WeatherService
+    private val service: WeatherService,
 ) : WeatherRepository {
-    override suspend fun getWeatherInfo(request: WeatherRequest): WeatherResponse {
-        return withContext(IO) {
+    override suspend fun getWeatherInfo(request: WeatherRequest): NetworkResult<WeatherResponse> {
+        return try {
             val response = service.getWeather(
                 lat = request.lat,
                 lon = request.lon,
                 units = request.units,
                 appid = request.appid
             )
-            if (response.isSuccessful.not()) {
-                when (val code = response.code()) {
-                    400 -> Log.e("api", "400 Bad Connection")
-                    404 -> Log.e("api", "404 Not Found")
-                    else -> {
-                        Log.e("api", "$code")
-                    }
-                }
+            val body = response.body()
+            if (response.isSuccessful.not() || body == null) {
+                throw HttpException(response)
             }
-            response.body()!!
-        }
+            NetworkResult.Success(body)
 
+        } catch (e: HttpException) {
+            NetworkResult.Error(code = e.code(), message = e.message())
+        } catch (e: Exception) {
+            NetworkResult.Exception(e)
+        }
     }
 }
