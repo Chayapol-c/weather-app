@@ -26,10 +26,10 @@ class WeatherViewModel @Inject constructor(
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
 
-    fun fetchWeatherData() {
+    fun fetchWeatherData(latitude: Double, longitude: Double) {
         val request = WeatherRequest(
-            lat = _uiState.value.latitude ?: 0.0,
-            lon = _uiState.value.longitude ?: 0.0,
+            lat = latitude,
+            lon = longitude,
             units = METRIC_UNIT,
             appid = APP_ID
         )
@@ -64,15 +64,6 @@ class WeatherViewModel @Inject constructor(
                         )
                     }
                 }
-        }
-    }
-
-    fun updateLatLon(latitude: Double, longitude: Double) {
-        _uiState.update {
-            it.copy(
-                latitude = latitude,
-                longitude = longitude
-            )
         }
     }
 }
