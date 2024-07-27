@@ -113,8 +113,25 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     AppStatus.Error -> {
+        lifecycleScope.launch {
+            repeatOnLifecycle(state = Lifecycle.State.STARTED) {
+                locationViewModel.uiState.collect { state ->
+                    when (state.status) {
+                        AppStatus.Idle -> {
+                            val lat = state.latitude
+                            val lon = state.longitude
+                            Log.i("LocationViewModel", "updateLocation: $lat, $lon")
+                            if (lat != null && lon != null) {
+                                viewModel.fetchWeatherData(lat, lon)
+                            }
+                        }
 
                     }
+                        AppStatus.Loading -> {
+                        }
+
+                        AppStatus.Error -> {
+                        }
                     }
                 }
             }
@@ -187,25 +204,26 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationData() {
-        locationViewModel.updateLocation { locationResult ->
-            locationResult.lastLocation?.let {
-                viewModel.updateLatLon(it.latitude, it.longitude)
-                if (Constant.isNetworkAvailable(this)) {
-                    viewModel.fetchWeatherData()
-                    Toast.makeText(
-                        this@MainActivity,
-                        "No Internet connection available",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
+        locationViewModel.updateLocation()
+//        locationViewModel.updateLocation { locationResult ->
+//            locationResult.lastLocation?.let {
+//                viewModel.updateLatLon(it.latitude, it.longitude)
+//                if (Constant.isNetworkAvailable(this)) {
+//                    viewModel.fetchWeatherData()
+//                    Toast.makeText(
+//                        this@MainActivity,
+//                        "No Internet connection available",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                } else {
+//                    Toast.makeText(
+//                        this@MainActivity,
+//                        "",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//            }
+//        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
