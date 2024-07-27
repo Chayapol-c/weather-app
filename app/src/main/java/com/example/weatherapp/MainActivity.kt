@@ -18,7 +18,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.ui.AppStatus
 import com.example.weatherapp.ui.LocationViewModel
@@ -46,62 +48,61 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
-                when (state.status) {
-                    AppStatus.Idle -> {
-                        mProgressDialog?.run {
-                            dismiss()
-                        }
-                        with(binding) {
-                            state.weatherInfo?.let {
-                                it.weather.forEach { weather ->
-                                    tvMain.text = weather.main
-                                    tvMainDescription.text = weather.description
-                                    when (weather.icon) {
-                                        "01d" -> ivMain.setImageResource(R.drawable.sunny)
-                                        "01n" -> ivMain.setImageResource(R.drawable.cloud) // clear sky
+            repeatOnLifecycle(state = Lifecycle.State.CREATED) {
+                viewModel.uiState.collect { state ->
+                    when (state.status) {
+                        AppStatus.Idle -> {
+                            hideLoading()
+                            with(binding) {
+                                state.weatherInfo?.let {
+                                    it.weather.forEach { weather ->
+                                        tvMain.text = weather.main
+                                        tvMainDescription.text = weather.description
+                                        when (weather.icon) {
+                                            "01d" -> ivMain.setImageResource(R.drawable.sunny)
+                                            "01n" -> ivMain.setImageResource(R.drawable.cloud) // clear sky
 
-                                        "02d" -> ivMain.setImageResource(R.drawable.cloud)
-                                        "02n" -> ivMain.setImageResource(R.drawable.cloud)
+                                            "02d" -> ivMain.setImageResource(R.drawable.cloud)
+                                            "02n" -> ivMain.setImageResource(R.drawable.cloud)
 
-                                        "03d" -> ivMain.setImageResource(R.drawable.cloud) // scattered clouds
-                                        "03n" -> ivMain.setImageResource(R.drawable.cloud)
-                                        "04d" -> ivMain.setImageResource(R.drawable.cloud) // broken clouds
-                                        "04n" -> ivMain.setImageResource(R.drawable.cloud)
+                                            "03d" -> ivMain.setImageResource(R.drawable.cloud) // scattered clouds
+                                            "03n" -> ivMain.setImageResource(R.drawable.cloud)
+                                            "04d" -> ivMain.setImageResource(R.drawable.cloud) // broken clouds
+                                            "04n" -> ivMain.setImageResource(R.drawable.cloud)
 
-                                        "09d" -> ivMain.setImageResource(R.drawable.rain) // shower rain
-                                        "09n" -> ivMain.setImageResource(R.drawable.rain)
+                                            "09d" -> ivMain.setImageResource(R.drawable.rain) // shower rain
+                                            "09n" -> ivMain.setImageResource(R.drawable.rain)
 
-                                        "10d" -> ivMain.setImageResource(R.drawable.rain)
-                                        "10n" -> ivMain.setImageResource(R.drawable.cloud)
+                                            "10d" -> ivMain.setImageResource(R.drawable.rain)
+                                            "10n" -> ivMain.setImageResource(R.drawable.cloud)
 
-                                        "11d" -> ivMain.setImageResource(R.drawable.storm)
-                                        "11n" -> ivMain.setImageResource(R.drawable.rain)
+                                            "11d" -> ivMain.setImageResource(R.drawable.storm)
+                                            "11n" -> ivMain.setImageResource(R.drawable.rain)
 
-                                        "13d" -> ivMain.setImageResource(R.drawable.snowflake)
-                                        "13n" -> ivMain.setImageResource(R.drawable.snowflake)
+                                            "13d" -> ivMain.setImageResource(R.drawable.snowflake)
+                                            "13n" -> ivMain.setImageResource(R.drawable.snowflake)
 
-                                        "50d" -> ivMain.setImageResource(R.drawable.rain) // mist
-                                        "50n" -> ivMain.setImageResource(R.drawable.rain)
+                                            "50d" -> ivMain.setImageResource(R.drawable.rain) // mist
+                                            "50n" -> ivMain.setImageResource(R.drawable.rain)
+                                        }
                                     }
+
+                                    tvTemp.text =
+                                        it.main.temp.toString() + application.resources.configuration.locales.toString()
+                                            .getUnit()
+
+                                    tvHumidity.text = it.main.humidity.toString() + "per cen"
+                                    tvMin.text = it.main.tempMin.toString() + " min"
+                                    tvMax.text = it.main.tempMax.toString() + " max"
+                                    tvSpeed.text = it.wind.speed.toString()
+                                    tvName.text = it.name
+                                    tvCountry.text = it.sys.country
+
+                                    tvSunriseTime.text = it.sys.sunrise.unixTime()
+                                    tvSunsetTime.text = it.sys.sunset.unixTime()
                                 }
-
-                                tvTemp.text =
-                                    it.main.temp.toString() + application.resources.configuration.locales.toString()
-                                        .getUnit()
-
-                                tvHumidity.text = it.main.humidity.toString() + "per cen"
-                                tvMin.text = it.main.tempMin.toString() + " min"
-                                tvMax.text = it.main.tempMax.toString() + " max"
-                                tvSpeed.text = it.wind.speed.toString()
-                                tvName.text = it.name
-                                tvCountry.text = it.sys.country
-
-                                tvSunriseTime.text = it.sys.sunrise.unixTime()
-                                tvSunsetTime.text = it.sys.sunset.unixTime()
                             }
                         }
-                    }
 
                     AppStatus.Loading -> {
                         mProgressDialog = Dialog(this@MainActivity)
@@ -113,6 +114,7 @@ class MainActivity : AppCompatActivity() {
 
                     AppStatus.Error -> {
 
+                    }
                     }
                 }
             }
