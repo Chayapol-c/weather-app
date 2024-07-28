@@ -26,6 +26,7 @@ import com.example.weatherapp.ui.AppStatus
 import com.example.weatherapp.ui.LocationViewModel
 import com.example.weatherapp.ui.WeatherViewModel
 import com.example.weatherapp.ui.displayAlert
+import com.example.weatherapp.ui.weather.WeatherAdapter
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -46,13 +47,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.srlMain.setOnRefreshListener {
+            requestLocationData()
+            binding.srlMain.isRefreshing = false
+        }
         lifecycleScope.launch {
             repeatOnLifecycle(state = Lifecycle.State.CREATED) {
                 viewModel.uiState.collect { state ->
                     when (state.status) {
                         AppStatus.Idle -> {
                             hideLoading()
-                            with(binding) {
+                            with(binding.clWeatherInfo) {
                                 state.weatherInfo?.let {
                                     it.weather.forEach { weather ->
                                         tvMain.text = weather.main

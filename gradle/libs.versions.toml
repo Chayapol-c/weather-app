@@ -17,10 +17,12 @@ materialVersion = "1.12.0"
 playServicesLocation = "21.3.0"
 dexter = "6.2.3"
 retrofit = "2.11.0"
+swiperefreshlayout = "1.2.0-alpha01"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 dexter = { module = "com.karumi:dexter", version.ref = "dexter" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
