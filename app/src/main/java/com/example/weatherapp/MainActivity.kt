@@ -6,12 +6,11 @@ import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -22,11 +21,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.weatherapp.databinding.ActivityMainBinding
+import com.example.weatherapp.ui.AlertDialogContext
 import com.example.weatherapp.ui.AppStatus
 import com.example.weatherapp.ui.LocationViewModel
 import com.example.weatherapp.ui.WeatherViewModel
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.example.weatherapp.ui.displayAlert
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -104,20 +103,27 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                    AppStatus.Loading -> {
-                        mProgressDialog = Dialog(this@MainActivity)
-                        mProgressDialog?.run {
-                            setContentView(binding.root)
-                            show()
+                        AppStatus.Loading -> {
+                            displayLoading()
+                        }
+
+                        AppStatus.Error -> {
+                            AlertDialog.Builder(this@MainActivity).apply {
+                                setTitle("Error")
+                                setMessage(state.errorMessage)
+                                setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                            }.create().show()
                         }
                     }
-
-                    AppStatus.Error -> {
+                }
+            }
+        }
         lifecycleScope.launch {
             repeatOnLifecycle(state = Lifecycle.State.STARTED) {
                 locationViewModel.uiState.collect { state ->
                     when (state.status) {
                         AppStatus.Idle -> {
+                            hideLoading()
                             val lat = state.latitude
                             val lon = state.longitude
                             Log.i("LocationViewModel", "updateLocation: $lat, $lon")
@@ -126,11 +132,18 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                    }
                         AppStatus.Loading -> {
+                            displayLoading()
                         }
 
                         AppStatus.Error -> {
+                            this@MainActivity.displayAlert(
+                                dialogContext = AlertDialogContext(
+                                    title = "Error",
+                                    message = state.errorMessage ?: "",
+                                    primaryBtnText = "OK",
+                                )
+                            )
                         }
                     }
                 }
@@ -144,7 +157,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        super.onPause()
         locationViewModel.pauseUpdate()
+    }
+
+    private fun displayLoading() {
+        mProgressDialog = Dialog(this@MainActivity)
+        mProgressDialog?.run {
+            show()
+        }
+    }
+
+    private fun hideLoading() {
+        mProgressDialog = null
     }
 
     private fun validatePermission() {
@@ -154,6 +179,7 @@ class MainActivity : AppCompatActivity() {
             locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
                 LocationManager.NETWORK_PROVIDER
             )
+        Log.d(this.localClassName, "isLocationEnabled: ${isLocationEnabled.not()}")
         if (isLocationEnabled.not()) {
             Toast.makeText(this, "Your location provider is turned off", Toast.LENGTH_SHORT).show()
 
@@ -164,11 +190,11 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ).withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                    if (report?.areAllPermissionsGranted() == true) {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport) {
+                    if (report.areAllPermissionsGranted()) {
                         requestLocationData()
                     }
-                    if (report?.isAnyPermissionPermanentlyDenied == true) {
+                    if (report.isAnyPermissionPermanentlyDenied) {
                         Toast.makeText(
                             this@MainActivity,
                             "You have denied location permission",

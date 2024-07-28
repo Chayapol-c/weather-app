@@ -1,5 +1,7 @@
 package com.example.weatherapp.data.repository
 
+import android.util.Log
+import com.example.weatherapp.BuildConfig
 import com.example.weatherapp.data.model.WeatherRequest
 import com.example.weatherapp.data.model.WeatherResponse
 import com.example.weatherapp.data.network.NetworkResult
@@ -22,11 +24,14 @@ class WeatherRepositoryImpl @Inject constructor(
             if (response.isSuccessful.not() || body == null) {
                 throw HttpException(response)
             }
+            Log.i(this.javaClass.name, "$body")
             NetworkResult.Success(body)
 
         } catch (e: HttpException) {
+            Log.i(this.javaClass.name, "${e.code()}, ${e.message()}")
             NetworkResult.Error(code = e.code(), message = e.message())
         } catch (e: Exception) {
+            Log.i(this.javaClass.name, "${e.message}")
             NetworkResult.Exception(e)
         }
     }
