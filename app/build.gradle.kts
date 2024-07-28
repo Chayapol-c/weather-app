@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation(libs.library)
+    releaseImplementation(libs.library.no.op)
 
 // Hilt Dependency Injection
     implementation(libs.hilt.android)
