@@ -1,4 +1,4 @@
-package com.example.weatherapp.ui
+package com.example.weatherapp.extension
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog

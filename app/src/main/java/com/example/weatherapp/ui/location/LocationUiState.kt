@@ -1,4 +1,6 @@
-package com.example.weatherapp.ui
+package com.example.weatherapp.ui.location
+
+import com.example.weatherapp.ui.weather.AppStatus
 
 data class LocationUiState(
     val status: AppStatus = AppStatus.Idle,

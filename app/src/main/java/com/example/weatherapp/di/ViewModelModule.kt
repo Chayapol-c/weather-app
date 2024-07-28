@@ -1,7 +1,7 @@
 package com.example.weatherapp.di
 
 import com.example.weatherapp.domain.WeatherUseCase
-import com.example.weatherapp.ui.WeatherViewModel
+import com.example.weatherapp.ui.weather.WeatherViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
