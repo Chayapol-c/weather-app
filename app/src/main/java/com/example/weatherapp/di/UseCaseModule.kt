@@ -1,7 +1,9 @@
 package com.example.weatherapp.di
 
 import com.example.weatherapp.data.repository.weather.WeatherRepository
+import com.example.weatherapp.domain.GetWeatherForecastUseCase
 import com.example.weatherapp.domain.WeatherUseCase
+import com.example.weatherapp.ui.weather.WeatherViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,4 +22,11 @@ object UseCaseModule {
     ): WeatherUseCase {
         return WeatherUseCase(weatherRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideViewModel(repository: WeatherRepository): GetWeatherForecastUseCase {
+        return GetWeatherForecastUseCase(repository)
+    }
+
 }

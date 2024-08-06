@@ -1,7 +1,7 @@
 package com.example.weatherapp.data.repository.weather
 
 import android.util.Log
-import com.example.weatherapp.BuildConfig
+import com.example.weatherapp.data.model.weatherforecast.WeatherForecastResponse
 import com.example.weatherapp.data.model.WeatherRequest
 import com.example.weatherapp.data.model.weatherinfo.WeatherResponse
 import com.example.weatherapp.data.network.NetworkResult
@@ -27,6 +27,30 @@ class WeatherRepositoryImpl @Inject constructor(
             Log.i(this.javaClass.name, "$body")
             NetworkResult.Success(body)
 
+        } catch (e: HttpException) {
+            Log.i(this.javaClass.name, "${e.code()}, ${e.message()}")
+            NetworkResult.Error(code = e.code(), message = e.message())
+        } catch (e: Exception) {
+            Log.i(this.javaClass.name, "${e.message}")
+            NetworkResult.Exception(e)
+        }
+    }
+
+    override suspend fun getWeatherForecast(request: WeatherRequest): NetworkResult<WeatherForecastResponse> {
+        return try {
+            val response = service.getWeatherForecast(
+                lat = request.lat,
+                lon = request.lon,
+                units = request.units,
+                appid = request.appid
+            )
+
+            val body = response.body()
+            if (response.isSuccessful.not() || body == null) {
+                throw HttpException(response)
+            }
+            Log.i(this.javaClass.name, "$body")
+            NetworkResult.Success(body)
         } catch (e: HttpException) {
             Log.i(this.javaClass.name, "${e.code()}, ${e.message()}")
             NetworkResult.Error(code = e.code(), message = e.message())

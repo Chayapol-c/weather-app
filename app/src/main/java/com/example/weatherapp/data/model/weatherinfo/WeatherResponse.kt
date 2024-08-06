@@ -1,5 +1,7 @@
 package com.example.weatherapp.data.model.weatherinfo
 
+import com.example.weatherapp.data.model.CloudsResponse
+import com.example.weatherapp.data.model.CoordinateResponse
 import java.io.Serializable
 
 
