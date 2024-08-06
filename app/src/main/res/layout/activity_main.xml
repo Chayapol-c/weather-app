@@ -9,13 +9,4 @@
     android:padding="@dimen/main_screen_content_padding"
     tools:context=".MainActivity">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/srlMain"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <include
-            android:id="@+id/clWeatherInfo"
-            layout="@layout/layout_weather_info" />
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </LinearLayout>
