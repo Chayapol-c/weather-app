@@ -1,9 +1,9 @@
-package com.example.weatherapp.data.repository
+package com.example.weatherapp.data.repository.weather
 
 import android.util.Log
 import com.example.weatherapp.BuildConfig
 import com.example.weatherapp.data.model.WeatherRequest
-import com.example.weatherapp.data.model.WeatherResponse
+import com.example.weatherapp.data.model.weatherinfo.WeatherResponse
 import com.example.weatherapp.data.network.NetworkResult
 import com.example.weatherapp.data.network.WeatherService
 import retrofit2.HttpException

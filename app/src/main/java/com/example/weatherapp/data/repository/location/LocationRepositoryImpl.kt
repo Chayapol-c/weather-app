@@ -1,4 +1,4 @@
-package com.example.weatherapp.data.repository
+package com.example.weatherapp.data.repository.location
 
 
 import android.Manifest

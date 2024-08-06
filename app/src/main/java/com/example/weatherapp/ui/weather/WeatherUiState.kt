@@ -1,6 +1,6 @@
 package com.example.weatherapp.ui.weather
 
-import com.example.weatherapp.data.model.WeatherResponse
+import com.example.weatherapp.data.model.weatherinfo.WeatherResponse
 
 data class WeatherUiState (
     val status: AppStatus = AppStatus.Idle,
