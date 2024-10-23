@@ -8,7 +8,7 @@ import com.example.weatherapp.data.model.WeatherRequest
 import com.example.weatherapp.data.network.onError
 import com.example.weatherapp.data.network.onException
 import com.example.weatherapp.data.network.onSuccess
-import com.example.weatherapp.domain.WeatherUseCase
+import com.example.weatherapp.domain.GetWeatherInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val weatherUseCase: WeatherUseCase
+    private val getWeatherInfoUseCase: GetWeatherInfoUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
@@ -39,7 +39,7 @@ class WeatherViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            weatherUseCase(request)
+            getWeatherInfoUseCase(request)
                 .onSuccess { newInfo ->
                     _uiState.update {
                         it.copy(

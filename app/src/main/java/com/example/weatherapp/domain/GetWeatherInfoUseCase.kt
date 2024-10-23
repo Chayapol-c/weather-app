@@ -6,7 +6,7 @@ import com.example.weatherapp.data.network.NetworkResult
 import com.example.weatherapp.data.repository.weather.WeatherRepository
 import javax.inject.Inject
 
-class WeatherUseCase @Inject constructor(
+class GetWeatherInfoUseCase @Inject constructor(
     private val weatherRepository: WeatherRepository
 ) {
 

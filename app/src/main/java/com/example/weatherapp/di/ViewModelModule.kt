@@ -1,6 +1,6 @@
 package com.example.weatherapp.di
 
-import com.example.weatherapp.domain.WeatherUseCase
+import com.example.weatherapp.domain.GetWeatherInfoUseCase
 import com.example.weatherapp.ui.weather.WeatherViewModel
 import com.example.weatherapp.ui.weatherforecast.WeatherForecastViewModel
 import dagger.Module
@@ -15,7 +15,7 @@ object ViewModelModule {
 
     @Provides
     @Singleton
-    fun provideViewModel(useCase: WeatherUseCase): WeatherViewModel {
+    fun provideViewModel(useCase: GetWeatherInfoUseCase): WeatherViewModel {
         return WeatherViewModel(useCase)
     }
 
